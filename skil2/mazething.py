@@ -1,6 +1,7 @@
 import pygame
 import random
 
+
 #2 is where the player spawns in grid
 
 window = pygame.display.set_mode((800,600))
@@ -26,15 +27,16 @@ grid =\
 [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1]
 [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1]
 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
-[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1]
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
 
 def generate_maze():
     for item in grid:
         for block in item:
-            if item = 1:
-                create_wall
+            if item == 1:
+                create_wall()
 
 def create_wall():
     pygame.draw.rect()
