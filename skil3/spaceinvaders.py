@@ -14,7 +14,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 # DISPLAY
-display_width = 1280
+display_width = 960
 display_height = 960
 DISPLAYSURFACE = pygame.display.set_mode((display_width, display_height))
 
@@ -26,7 +26,7 @@ FPS = 60
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
+        pygame.sprite.Sprite.__init__(self) # call Sprite initializer
         self.image = pygame.image.load("images/spaceship.png")
         self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
@@ -37,6 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.dx = 15
         self.dy = 15
         self.lives = 3
+        self.gun = Gun()
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -50,16 +51,13 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN]:
             self.rect.y += self.dy
         if keys[pygame.K_SPACE]:
-            missile = Missile()
-            missile.rect.x = player.rect.x
-            missile.rect.y = player.rect.y
-            all_sprites_list.add(missile)
-            missile_list.add(missile)
+            self.gun.shoot(58, 34) #left gun
+            self.gun.shoot(91, 34) #right gun
 
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
+        pygame.sprite.Sprite.__init__(self) # call Sprite initializer
         self.image = pygame.image.load("images/enemy.png")
         self.image = self.image.convert()
         self.rect = self.image.get_rect()
@@ -77,14 +75,14 @@ class Background(pygame.sprite.Sprite):
         self.rect.left, self.rect.top = location
 
 
-class Missile(pygame.sprite.Sprite):
+class Bullet(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("images/laser.png")
         self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
-        self.dx = 25
-        self.dy = 25
+        self.dx = 25 #speed on x
+        self.dy = 25 #speed on y
 
     def update(self):
         self.rect.y -= self.dy
@@ -100,6 +98,23 @@ class Missile(pygame.sprite.Sprite):
         elif self.rect.x < 0:
             pass
 
+class Gun(pygame.sprite.Sprite):
+    def __init__(self):
+        self.shot_start_x = 4
+        self.shot_start_y = 13
+
+    def shoot(self, x_pos_on_sprite, y_pos_on_sprite):
+        bullet = Bullet()
+        bullet.rect.x = player.rect.x + x_pos_on_sprite - self.shot_start_x
+        bullet.rect.y = player.rect.y + y_pos_on_sprite - self.shot_start_y
+        all_sprites_list.add(bullet)
+        bullet_list.add(bullet)
+
+
+class Wall(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+
 
 BackGround = Background('images/spacepic.png', [0,0])
 player = Player()
@@ -112,11 +127,11 @@ all_sprites_list = pygame.sprite.Group()
 #contains all enemies
 enemy_list = pygame.sprite.Group()
 
-#contains all missiles
-missile_list = pygame.sprite.Group()
+#contains all bullets
+bullet_list = pygame.sprite.Group()
 
 enemies_hit_list = pygame.sprite.Group()
-#contains all enemies that have been hit by a missile(/player?)
+#contains all enemies that have been hit by a bullet(/player?)
 
 all_sprites_list.add(player)
 

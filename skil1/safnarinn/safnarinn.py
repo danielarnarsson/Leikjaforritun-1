@@ -49,7 +49,6 @@ def main():
     rand_ball_x = random.randrange(25, display_width - 75)
     ball_y = - ball_radius
     ball_color = colors['GREEN']
-    print(ball_color)
 
     gameDisplay.fill(colors['WHITE'])
 
@@ -82,10 +81,10 @@ def main():
             center_msg_to_screen("Do you want to quit the game? (y/n)", colors['BLUE'])
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_y or pygame.K_ESCAPE:
+                    if event.key == pygame.K_y:
                         running = False
                         gamepause = False
-                    elif event.key == pygame.K_n:
+                    elif event.key == pygame.K_n or pygame.K_ESCAPE:
                         gamepause = False
             pygame.display.update()
 
