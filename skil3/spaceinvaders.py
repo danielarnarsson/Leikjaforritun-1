@@ -100,6 +100,7 @@ class Bullet(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
         self.shot_start_x = 4
         self.shot_start_y = 13
 
