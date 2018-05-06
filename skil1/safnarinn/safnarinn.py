@@ -134,7 +134,7 @@ def main():
 
 
         if bucket_x <= (rand_ball_x + ball_radius) and (bucket_x + bucket_width) >= (rand_ball_x - ball_radius): #something wrong here?
-            if bucket_y <= (ball_y + ball_radius): #something wrong here?
+            if bucket_y <= (ball_y + ball_radius):
                 score += 1
                 rand_ball_x = random.randrange(50, display_width - 50)
                 ball_y = - ball_radius
