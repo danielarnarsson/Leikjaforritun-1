@@ -23,7 +23,8 @@ clock = pygame.time.Clock()
 FPS = 60
 
 # FONT
-font = pygame.font.SysFont("calibri", 32, bold=True)
+smallfont = pygame.font.SysFont("calibri", 32, bold=True)
+bigfont= pygame.font.SysFont("calibri", 42, bold=True)
 
 
 class Player(pygame.sprite.Sprite):
@@ -66,6 +67,11 @@ class Player(pygame.sprite.Sprite):
                 self.last = now
                 self.gun.shoot(58, 34)  # left gun
                 self.gun.shoot(91, 34)  # right gun
+                if self.score > 0:
+                    self.score = self.score - 10
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
 
 
 class Asteroid(pygame.sprite.Sprite):
@@ -77,14 +83,11 @@ class Asteroid(pygame.sprite.Sprite):
         self.rect.y = -160
         self.rect.x = random.randint(1, display_width - 160)
         self.dx = 50
-        self.dy = random.randint(3,7)
-        self.lives = 10
+        self.dy = random.randint(5,9)
 
     def update(self):
         self.rect.y += self.dy
         if self.rect.y >= display_height:
-            self.kill()
-        if self.lives <= 0:
             self.kill()
 
 
@@ -104,6 +107,7 @@ class AsteroidSpawner:
                 all_sprites_list.add(asteroid)
             self.delay -= 35
             self.time = new_time
+
 
 
 class Background(pygame.sprite.Sprite):
@@ -142,42 +146,35 @@ class Gun(pygame.sprite.Sprite):
         all_sprites_list.add(self.bullet)
         bullet_list.add(self.bullet)
 
-def center_msg_to_screen(msg, color):
+
+def msg_to_screen(font, msg, color, x_pos, y_pos, fromright=False):
+    text = font.render(msg, True, color)
+    if not fromright:
+        DISPLAYSURFACE.blit(text, (x_pos, y_pos))
+    else:
+        DISPLAYSURFACE.blit(text, (display_width - text.get_width() - x_pos, y_pos))
+
+
+def center_msg_to_screen(font, msg, color):
     text = font.render(msg, True, color)
     DISPLAYSURFACE.blit(text, [display_width/2 - text.get_width()/2, display_height/2 - text.get_height()/2])
 
 
-BackGround = Background('images/spacepic.png', [0,0])
-player = Player()
-
-
-
-# SPRITE LISTS #
-# contains player
-player_list = pygame.sprite.Group()
-
-# contains all sprites except background
 all_sprites_list = pygame.sprite.Group()
-
-# contains all asteroids
 asteroid_list = pygame.sprite.Group()
-
-# contains all bullets
 bullet_list = pygame.sprite.Group()
-
-# contains all enemies that have been hit by a bullet(/player?)
-asteroids_hit_list = pygame.sprite.Group()
-
-# contains
-
+BackGround = Background('images/spacepic.png', [0, 0])
+player = Player()
+asteroidspawner = AsteroidSpawner()
 all_sprites_list.add(player)
-player_list.add(player)
+
 
 def main():
-    asteroidspawner = AsteroidSpawner()
     running = True
     game = True
     gamepause = False
+    gamewin = False
+    gameover = False
     while running:
         while game:
             for event in pygame.event.get():
@@ -187,22 +184,31 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         gamepause = True
                         game = False
+            if player.lives <= 0:
+                gamepause=True
+                game=False
             asteroidspawner.spawn_asteroid()
             collided = pygame.sprite.groupcollide(bullet_list, asteroid_list, True, True)
             if collided:
                 for bullet in collided:
                     player.score += 100
+            collided = pygame.sprite.spritecollide(player, asteroid_list, True)
+            if collided:
+                player.lives -= 1
             all_sprites_list.update()
             DISPLAYSURFACE.fill(WHITE)
             DISPLAYSURFACE.blit(BackGround.image, BackGround.rect)
             bullet_list.draw(DISPLAYSURFACE)
-            player_list.draw(DISPLAYSURFACE)
+            player.draw(DISPLAYSURFACE)
             asteroid_list.draw(DISPLAYSURFACE)
+            msg_to_screen(smallfont, "score: " + str(player.score), WHITE, 20, 20)
+            msg_to_screen(smallfont, "lives: " + str(player.lives), WHITE, 20, 20, fromright=True)
             pygame.display.update()
             clock.tick(FPS)
+
         while gamepause:
             DISPLAYSURFACE.fill(BLACK)
-            center_msg_to_screen("Do you want to quit the game? (y/n)", WHITE)
+            center_msg_to_screen(smallfont, "Do you want to quit the game? (y/n)", WHITE)
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_y:
@@ -212,6 +218,24 @@ def main():
                         gamepause = False
                         game = True
             pygame.display.update()
+            clock.tick(FPS)
+
+        while gamewin:
+            DISPLAYSURFACE.fill(BLACK)
+            center_msg_to_screen(bigfont, "You win!", WHITE)
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_y:
+                        running = False
+                        gamepause = False
+                    elif event.key == pygame.K_n or pygame.K_ESCAPE:
+                        gamepause = False
+                        game = True
+            pygame.display.update()
+            clock.tick(FPS)
+
+        while gameover:
+            pass
     pygame.quit()
     quit()
 
