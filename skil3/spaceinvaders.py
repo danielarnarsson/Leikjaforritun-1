@@ -2,6 +2,8 @@ import pygame
 import random
 import os
 
+pygame.mixer.pre_init(44100, -16, 2, 2048)
+pygame.mixer.init()
 pygame.init()
 
 ##CONSTANTS##
@@ -27,9 +29,17 @@ path = os.path.abspath('fonts/emulogic.ttf')
 smallfont = pygame.font.Font(path, 23)
 bigfont = pygame.font.Font(path, 29)
 
+# SOUNDS
+pew_sound = pygame.mixer.Sound('sounds/pew.ogg')
+boom_sound = pygame.mixer.Sound('sounds/boom.ogg')
+impact_sound = pygame.mixer.Sound('sounds/impact.ogg')
+pause_in = pygame.mixer.Sound('sounds/pause_in.ogg')
+pause_out = pygame.mixer.Sound('sounds/pause_out.ogg')
+youwin_jingle = pygame.mixer.Sound('sounds/youwin.ogg')
+gameover_sound = pygame.mixer.Sound('sounds/gameover.ogg')
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self) -> object:
+    def __init__(self):
         pygame.sprite.Sprite.__init__(self) # call Sprite initializer
         self.image = pygame.image.load("images/spaceship.png")
         self.image = self.image.convert_alpha()
@@ -70,6 +80,7 @@ class Player(pygame.sprite.Sprite):
                 self.gun.shoot(91, 34)  # right gun
                 if self.score > 0:
                     self.score = self.score - 20
+                pygame.mixer.Sound.play(pew_sound)
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -107,7 +118,7 @@ class AsteroidSpawner:
                 asteroid = Asteroid()
                 asteroid_list.add(asteroid)
                 all_sprites_list.add(asteroid)
-            self.speed_increment += 0.05
+            self.speed_increment += 0.1
             asteroid.dy += self.speed_increment
             self.delay -= 10
             self.time = new_time
@@ -148,8 +159,6 @@ class Gun(pygame.sprite.Sprite):
         self.bullet.rect.y = player.rect.y + y_pos_on_sprite - self.shot_start_y
         all_sprites_list.add(self.bullet)
         bullet_list.add(self.bullet)
-        #pygame.mixer.music.load('pew.mp3')
-        #pygame.mixer.music.play(0)
 
 
 def msg_to_screen(font, msg, color, x_pos, y_pos, fromright=False):
@@ -178,7 +187,7 @@ while running:
         all_sprites_list = pygame.sprite.Group()
         asteroid_list = pygame.sprite.Group()
         bullet_list = pygame.sprite.Group()
-        BackGround = Background('images/spacepic.png', [0, 0])
+        BackGround = Background('images/spacepic.jpg', [0, 0])
         player = Player()
         asteroidspawner = AsteroidSpawner()
         all_sprites_list.add(player)
@@ -197,16 +206,19 @@ while running:
                     gamepause = False
                     game = False
                     running = False
+
                 elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
                     gamepause = False
                     game = True
+                    pygame.mixer.Sound.play(pause_out)
         pygame.display.update()
         clock.tick(FPS)
 
     while gameover:
         DISPLAYSURFACE.fill(BLACK)
-        center_msg_to_screen(smallfont, "You lost.", WHITE, y = display_height/2 - 65)
-        center_msg_to_screen(smallfont, "Do you want to play again? (y/n)", WHITE)
+        center_msg_to_screen(bigfont, "GAME OVER.", WHITE, y = display_height/2 - 65)
+        center_msg_to_screen(bigfont, "SCORE: " + str(player.score), WHITE, y = display_height/2 + 0)
+        center_msg_to_screen(bigfont, "Do you want to play again? (y/n)", WHITE, y = display_height/2 + 65)
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_y:
@@ -214,11 +226,11 @@ while running:
                     game = False
                     running = True
                     reset = True
+
                 elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
                     game = False
                     gameover = False
                     running = False
-
         pygame.display.update()
         clock.tick(FPS)
 
@@ -227,16 +239,19 @@ while running:
         center_msg_to_screen(bigfont, "YOU WIN!", WHITE, y = display_height/2 - 65)
         center_msg_to_screen(bigfont, "SCORE: " + str(player.score), WHITE, y = display_height/2 + 0)
         center_msg_to_screen(bigfont, "Do you want to play again? (y/n)", WHITE, y = display_height/2 + 65)
-        for events in pygame.event.get():
+        for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_y:
                     gamewin = False
-                    running = True
                     reset = True
 
-                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
                     gamewin = False
+                    gameover = False
+                    game = False
                     running = False
+                    reset = False
+
         pygame.display.update()
         clock.tick(FPS)
 
@@ -244,24 +259,38 @@ while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game = False
+                running = False
+                gamewin = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     gamepause = True
                     game = False
+                    pygame.mixer.Sound.play(pause_in)
+                if event.key == pygame.K_w:
+                    gamewin = True
+                    game = False
+
         if player.lives <= 0:
             gameover = True
             game = False
-        if asteroidspawner.delay <= 500:
+            pygame.mixer.Sound.play(gameover_sound)
+
+
+        elif asteroidspawner.delay <= 500:
             gamewin = True
             game = False
+            pygame.mixer.Sound.play(youwin_jingle)
         asteroidspawner.spawn_asteroid()
         collided = pygame.sprite.groupcollide(bullet_list, asteroid_list, True, True)
         if collided:
-            for bullet in collided:
+            for hits in collided:
                 player.score += 100
+            pygame.mixer.Sound.play(boom_sound)
         collided = pygame.sprite.spritecollide(player, asteroid_list, True)
         if collided:
-            player.lives -= 1
+            for hits in collided:
+                player.lives -= 1
+            pygame.mixer.Sound.play(impact_sound)
         all_sprites_list.update()
         DISPLAYSURFACE.fill(WHITE)
         DISPLAYSURFACE.blit(BackGround.image, BackGround.rect)
